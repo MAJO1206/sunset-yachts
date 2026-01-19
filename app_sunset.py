@@ -55,4 +55,7 @@ if menu == "Registrar":
 
 elif menu == "Reportes":
     df = get_data()
-    st.dataframe(df, use_container_width=True) if not df.empty else st.info("Sin datos")
+  if not df.empty:
+    st.dataframe(df, use_container_width=True)
+else:
+    st.info("Sin datos por ahora")
