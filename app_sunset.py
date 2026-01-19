@@ -1,61 +1,67 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
 import os
+from datetime import datetime
 
-st.set_page_config(page_title="Sunset Yachts", layout="wide")
+# --- CONFIGURACIÓN ---
+st.set_page_config(page_title="Sunset Yachts", page_icon="⚓", layout="wide")
 
-# --- BUSCADOR DE LOGO Y DIAGNÓSTICO ---
-def buscar_logo():
-    files = os.listdir('.')
-    for f in files:
-        if f.lower().endswith(('.png', '.jpg', '.jpeg')): return f
-    return None
-
-logo = buscar_logo()
-col1, col2 = st.columns([1, 4])
-
-with col1:
-    if logo:
-        st.image(logo, width=150)
-    else:
-        st.error("⚠️ No veo el logo")
-        st.info(f"Archivos en esta carpeta: {os.listdir('.')}")
-
-with col2:
-    st.title("SUNSET YACHTS GROUP")
-    st.markdown("**Management System**")
-
-st.divider()
-
-# --- DATOS ---
+# --- FUNCIONES ---
 FILE = 'reportes.csv'
 CATS = ["Mecánica", "Electrónica", "Interiores", "Cubierta", "Limpieza", "Admin"]
 
 def get_data():
-    return pd.read_csv(FILE) if os.path.exists(FILE) else pd.DataFrame(columns=["Fecha", "Yate", "Cat", "Desc", "Foto"])
+    if os.path.exists(FILE):
+        return pd.read_csv(FILE)
+    return pd.DataFrame(columns=["Fecha", "Yate", "Cat", "Desc", "Foto"])
 
-# --- APP ---
+# --- INTERFAZ PRINCIPAL ---
+# Intentar mostrar logo, si no hay, mostrar texto
+if os.path.exists("logo.jpg"):
+    st.image("logo.jpg", width=250)
+else:
+    st.title("SUNSET YACHTS GROUP")
+
+st.markdown("---")
+
+# Menú lateral
 menu = st.sidebar.radio("Menú:", ["Registrar", "Reportes"])
 
 if menu == "Registrar":
     st.subheader("📝 Nuevo Reporte")
-    with st.form("f", clear_on_submit=True):
-        yate = st.text_input("Yate")
+    with st.form("formulario_reporte", clear_on_submit=True):
+        yate = st.text_input("Nombre del Yate")
         cat = st.selectbox("Categoría", CATS)
-        desc = st.text_area("Detalles")
-        foto = st.file_uploader("Foto", type=['jpg','png'])
-        if st.form_submit_button("Guardar", type="primary"):
+        desc = st.text_area("Detalles del trabajo")
+        foto = st.file_uploader("Foto evidencia", type=['jpg','png', 'jpeg'])
+        
+        guardar = st.form_submit_button("Guardar Reporte", type="primary")
+        
+        if guardar:
             if yate and desc:
-                new = {"Fecha": datetime.now(), "Yate": yate, "Cat": cat, "Desc": desc, "Foto": foto.name if foto else ""}
-                df = pd.concat([get_data(), pd.DataFrame([new])], ignore_index=True)
+                # Crear el registro
+                new_data = {
+                    "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "Yate": yate,
+                    "Cat": cat,
+                    "Desc": desc,
+                    "Foto": foto.name if foto else "Sin foto"
+                }
+                # Guardar en CSV
+                df = get_data()
+                df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
                 df.to_csv(FILE, index=False)
-                st.success("✅ Guardado")
-            else: st.error("Faltan datos")
+                st.success("✅ ¡Reporte guardado exitosamente!")
+            else:
+                st.error("⚠️ Faltan datos: Por favor escribe el nombre del Yate y los Detalles.")
 
 elif menu == "Reportes":
+    st.subheader("📊 Historial de Mantenimiento")
     df = get_data()
-  if not df.empty:
-    st.dataframe(df, use_container_width=True)
-else:
-    st.info("Sin datos por ahora")
+    
+    if not df.empty:
+        # Ordenar: Lo más nuevo primero
+        df = df.sort_values(by="Fecha", ascending=False)
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.info("📭 No hay reportes registrados todavía.")
