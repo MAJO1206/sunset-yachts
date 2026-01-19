@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from datetime import datetime
 
-# --- CONFIGURACIÓN ---
+# --- CONFIGURACIÓN CON EL ANCLA ⚓ ---
 st.set_page_config(page_title="Sunset Yachts", page_icon="⚓", layout="wide")
 
 # --- FUNCIONES ---
@@ -16,11 +16,11 @@ def get_data():
     return pd.DataFrame(columns=["Fecha", "Yate", "Cat", "Desc", "Foto"])
 
 # --- INTERFAZ PRINCIPAL ---
-# Intentar mostrar logo, si no hay, mostrar texto
+# Logo o Título
 if os.path.exists("logo.jpg"):
     st.image("logo.jpg", width=250)
 else:
-    st.title("SUNSET YACHTS GROUP")
+    st.title("SUNSET YACHTS GROUP ⚓")
 
 st.markdown("---")
 
@@ -39,7 +39,6 @@ if menu == "Registrar":
         
         if guardar:
             if yate and desc:
-                # Crear el registro
                 new_data = {
                     "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "Yate": yate,
@@ -47,21 +46,20 @@ if menu == "Registrar":
                     "Desc": desc,
                     "Foto": foto.name if foto else "Sin foto"
                 }
-                # Guardar en CSV
                 df = get_data()
                 df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
                 df.to_csv(FILE, index=False)
-                st.success("✅ ¡Reporte guardado exitosamente!")
+                st.success("✅ Reporte guardado")
             else:
-                st.error("⚠️ Faltan datos: Por favor escribe el nombre del Yate y los Detalles.")
+                st.error("⚠️ Faltan datos")
 
 elif menu == "Reportes":
     st.subheader("📊 Historial de Mantenimiento")
     df = get_data()
     
     if not df.empty:
-        # Ordenar: Lo más nuevo primero
+        # Ordenar por fecha (lo más nuevo arriba)
         df = df.sort_values(by="Fecha", ascending=False)
         st.dataframe(df, use_container_width=True)
     else:
-        st.info("📭 No hay reportes registrados todavía.")
+        st.info("📭 No hay reportes aún.")
